@@ -126,7 +126,8 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
             val im = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             im.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS)
 
-            val dataBaseReference = FirebaseDatabase.getInstance().reference
+            val dataBaseReference =
+                FirebaseDatabase.getInstance("https://qaapp-4d504-default-rtdb.asia-southeast1.firebasedatabase.app").reference
             val genreRef = dataBaseReference.child(ContentsPATH).child(mGenre.toString())
 
             val data = HashMap<String, String>()

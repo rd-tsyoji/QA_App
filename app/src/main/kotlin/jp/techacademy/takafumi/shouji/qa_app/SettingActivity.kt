@@ -2,6 +2,7 @@ package jp.techacademy.takafumi.shouji.qa_app
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
@@ -25,13 +26,14 @@ class SettingActivity : AppCompatActivity() {
         val name = sp.getString(NameKEY, "")
         binding.nameText.setText(name)
 
-        mDataBaseReference = FirebaseDatabase.getInstance().reference
+        mDataBaseReference =
+            FirebaseDatabase.getInstance(FirebaseURL).reference
 
         // UIの初期設定
         title = getString(R.string.settings_title)
 
         // 変更ボタン押下時の処理
-        binding.changeButton.setOnClickListener{v ->
+        binding.changeButton.setOnClickListener { v ->
             // キーボードが出ていたら閉じる
             val im = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
             im.hideSoftInputFromWindow(v.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
@@ -64,7 +66,8 @@ class SettingActivity : AppCompatActivity() {
         binding.logoutButton.setOnClickListener { v ->
             FirebaseAuth.getInstance().signOut()
             binding.nameText.setText("")
-            Snackbar.make(v, getString(R.string.logout_complete_message), Snackbar.LENGTH_LONG).show()
+            Snackbar.make(v, getString(R.string.logout_complete_message), Snackbar.LENGTH_LONG)
+                .show()
         }
     }
 }

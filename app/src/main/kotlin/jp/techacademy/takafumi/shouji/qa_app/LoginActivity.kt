@@ -29,7 +29,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        mDataBaseReference = FirebaseDatabase.getInstance().reference
+        mDataBaseReference = FirebaseDatabase.getInstance(FirebaseURL).reference
 
         // FirebaseAuthのオブジェクトを取得する
         mAuth = FirebaseAuth.getInstance()

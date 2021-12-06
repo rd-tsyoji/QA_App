@@ -11,3 +11,6 @@ const val AnswersPATH = "answers"
 
 // Preferenceに表示名を保存する時のキー
 const val NameKEY = "name"
+
+// firebaseDBURL
+const val FirebaseURL = "https://qaapp-4d504-default-rtdb.asia-southeast1.firebasedatabase.app"
