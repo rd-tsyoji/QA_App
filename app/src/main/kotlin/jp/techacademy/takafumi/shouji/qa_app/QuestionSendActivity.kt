@@ -26,11 +26,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import jp.techacademy.takafumi.shouji.qa_app.databinding.ActivityQuestionSendBinding
 import java.io.ByteArrayOutputStream
 
-class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
-    DatabaseReference.CompletionListener {
+class QuestionSendActivity : AppCompatActivity(), View.OnClickListener {
 
     companion object {
         private const val PERMISSIONS_REQUEST_CODE = 100
@@ -126,15 +126,6 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
             val im = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             im.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS)
 
-            val dataBaseReference =
-                FirebaseDatabase.getInstance("https://qaapp-4d504-default-rtdb.asia-southeast1.firebasedatabase.app").reference
-            val genreRef = dataBaseReference.child(ContentsPATH).child(mGenre.toString())
-
-            val data = HashMap<String, String>()
-
-            // UID
-            data["uid"] = FirebaseAuth.getInstance().currentUser!!.uid
-
             // タイトルと本文を取得する
             val title = binding.titleText.text.toString()
             val body = binding.bodyText.text.toString()
@@ -155,9 +146,14 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
             val sp = PreferenceManager.getDefaultSharedPreferences(this)
             val name = sp.getString(NameKEY, "")
 
-            data["title"] = title
-            data["body"] = body
-            data["name"] = name!!
+            // FirestoreQuestionのインスタンスを作成し、値を詰めていく
+            val fireStoreQuestion = FireStoreQuestion()
+
+            fireStoreQuestion.uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            fireStoreQuestion.title = title
+            fireStoreQuestion.body = body
+            fireStoreQuestion.name = name!!
+            fireStoreQuestion.genre = mGenre
 
             // 添付画像を取得する
             val drawable = binding.imageView.drawable as? BitmapDrawable
@@ -168,12 +164,27 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
                 val baos = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
                 val bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT)
-
-                data["image"] = bitmapString
+                fireStoreQuestion.image = bitmapString
             }
 
-            genreRef.push().setValue(data, this)
             binding.progressBar.visibility = View.VISIBLE
+            FirebaseFirestore.getInstance()
+                .collection(ContentsPATH)
+                .document(fireStoreQuestion.id)
+                .set(fireStoreQuestion)
+                .addOnSuccessListener {
+                    binding.progressBar.visibility = View.GONE
+                    finish()
+                }
+                .addOnFailureListener {
+                    it.printStackTrace()
+                    binding.progressBar.visibility = View.GONE
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        getString(R.string.question_send_error_message),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
         }
     }
 
@@ -218,19 +229,5 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
         chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(cameraIntent))
 
         getContent.launch(chooserIntent)
-    }
-
-    override fun onComplete(databaseError: DatabaseError?, databaseReference: DatabaseReference) {
-        binding.progressBar.visibility = View.GONE
-
-        if (databaseError == null) {
-            finish()
-        } else {
-            Snackbar.make(
-                findViewById(android.R.id.content),
-                getString(R.string.question_send_error_message),
-                Snackbar.LENGTH_LONG
-            ).show()
-        }
     }
 }

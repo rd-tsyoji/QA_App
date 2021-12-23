@@ -9,12 +9,12 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import jp.techacademy.takafumi.shouji.qa_app.databinding.ActivitySettingBinding
 
 class SettingActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingBinding
-    private lateinit var mDataBaseReference: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,9 +25,6 @@ class SettingActivity : AppCompatActivity() {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         val name = sp.getString(NameKEY, "")
         binding.nameText.setText(name)
-
-        mDataBaseReference =
-            FirebaseDatabase.getInstance(FirebaseURL).reference
 
         // UIの初期設定
         title = getString(R.string.settings_title)
@@ -47,15 +44,17 @@ class SettingActivity : AppCompatActivity() {
             } else {
                 // 変更した表示名をFirebaseに保存する
                 val name2 = binding.nameText.text.toString()
-                val userRef = mDataBaseReference.child(UsersPATH).child(user.uid)
-                val data = HashMap<String, String>()
-                data["name"] = name2
-                userRef.setValue(data)
+                val setData = FirestoreUser()
+                setData.name = name2
+                FirebaseFirestore.getInstance()
+                    .collection(UsersPATH)
+                    .document(user.uid)
+                    .set(setData)
 
                 // 変更した表示名をPreferenceに保存する
                 val sp2 = PreferenceManager.getDefaultSharedPreferences(applicationContext)
                 val editor = sp2.edit()
-                editor.putString(NameKEY, name)
+                editor.putString(NameKEY, name2)
                 editor.apply()
 
                 Snackbar.make(v, getString(R.string.change_disp_name), Snackbar.LENGTH_LONG).show()

@@ -11,6 +11,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import jp.techacademy.takafumi.shouji.qa_app.databinding.ActivityLoginBinding
 
 class LoginActivity : AppCompatActivity() {
@@ -19,7 +21,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var mAuth: FirebaseAuth
     private lateinit var mCreateAccountListener: OnCompleteListener<AuthResult>
     private lateinit var mLoginListener: OnCompleteListener<AuthResult>
-    private lateinit var mDataBaseReference: DatabaseReference
+
+    private var snapshotListener: ListenerRegistration? = null
 
     // アカウント作成時にフラグを立て、ログイン処理後に名前をFirebaseに保存する
     private var mIsCreateAccount = false
@@ -29,7 +32,6 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        mDataBaseReference = FirebaseDatabase.getInstance(FirebaseURL).reference
 
         // FirebaseAuthのオブジェクトを取得する
         mAuth = FirebaseAuth.getInstance()
@@ -62,28 +64,29 @@ class LoginActivity : AppCompatActivity() {
         mLoginListener = OnCompleteListener { task ->
             if (task.isSuccessful) {
                 // 成功した場合
-                val user = mAuth.currentUser
-                val userRef = mDataBaseReference.child(UsersPATH).child(user!!.uid)
+                val user = mAuth.currentUser!!
 
                 if (mIsCreateAccount) {
                     // アカウント作成の時は表示名をFirebaseに保存する
                     val name = binding.nameText.text.toString()
 
-                    val data = HashMap<String, String>()
-                    data["name"] = name
-                    userRef.setValue(data)
+                    FirebaseFirestore.getInstance().collection(UsersPATH).document(user.uid)
+                        .set(hashMapOf("name" to name))
 
                     // 表示名をPreferenceに保存する
                     saveName(name)
                 } else {
-                    userRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            val data = snapshot.value as Map<*, *>?
-                            saveName(data!!["name"] as String)
-                        }
-
-                        override fun onCancelled(firebaseError: DatabaseError) {}
-                    })
+                    snapshotListener?.remove()
+                    snapshotListener =
+                        FirebaseFirestore.getInstance().collection(UsersPATH).document(user.uid)
+                            .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+                                if (firebaseFirestoreException != null) {
+                                    // 取得エラー
+                                    return@addSnapshotListener
+                                }
+                                val data = querySnapshot?.get("name").toString()
+                                saveName(data)
+                            }
                 }
 
                 // プログレスバーを非表示にする
