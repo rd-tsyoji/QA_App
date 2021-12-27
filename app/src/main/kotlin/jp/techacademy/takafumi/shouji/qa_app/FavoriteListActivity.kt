@@ -25,6 +25,8 @@ class FavoriteListActivity : AppCompatActivity() {
         val extras = intent.extras
         userId = extras!!.get("userId") as String
 
+        title = getString(R.string.menu_favorite_label)
+
         // ListViewの準備
         mAdapter = QuestionsListAdapter(this)
         mFavoriteQuestionList = java.util.ArrayList<Question>()

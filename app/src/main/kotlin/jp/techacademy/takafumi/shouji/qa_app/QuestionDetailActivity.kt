@@ -3,6 +3,7 @@ package jp.techacademy.takafumi.shouji.qa_app
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.*
@@ -33,6 +34,12 @@ class QuestionDetailActivity : AppCompatActivity() {
         mQuestion = extras!!.get("question") as Question
 
         title = mQuestion.title
+
+        binding.favoriteImageView.visibility = if (user == null) {
+            View.INVISIBLE
+        } else {
+            View.VISIBLE
+        }
 
         // ListViewの準備
         mAdapter = QuestionDetailListAdapter(this, mQuestion)

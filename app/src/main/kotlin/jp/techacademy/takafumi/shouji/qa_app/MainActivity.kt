@@ -37,6 +37,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // id名でActionBarのサポートを依頼
         setSupportActionBar(binding.appBar.toolbar)
 
+        // ログイン済みのユーザーを取得する
+        val user = FirebaseAuth.getInstance().currentUser
+
+        binding.navView.menu.findItem(R.id.nav_favorite).isVisible = user != null
+
         // fabにClickリスナーを登録
         binding.appBar.fab.setOnClickListener { view ->
             // ジャンルを選択していない場合（mGenre == 0）はエラーを表示するだけ
@@ -49,9 +54,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             } else {
 
             }
-
-            // ログイン済みのユーザーを取得する
-            val user = FirebaseAuth.getInstance().currentUser
 
             // ログインしていなければログイン画面に遷移させる
             if (user == null) {
@@ -97,6 +99,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (mGenre == 0) {
             onNavigationItemSelected(binding.navView.menu.getItem(0))
         }
+
+        val user = FirebaseAuth.getInstance().currentUser
+        binding.navView.menu.findItem(R.id.nav_favorite).isVisible = user != null
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
